@@ -67,6 +67,8 @@ class MinecraftInterface:
             self.schedule_shutdown(msg['time'], msg['message'])
         elif msg['action'] == 'send-message':
             self.send_message(msg['message'])
+        elif msg['action'] == 'whitelist':
+            self.cmd(f'whitelist add {msg["player"]}')
 
         
 def main(queue_url):

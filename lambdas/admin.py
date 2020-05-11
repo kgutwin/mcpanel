@@ -52,6 +52,12 @@ def main_page(response=''):
         response=response
     )
 
+def send_sqs(ev):
+    sqs.send_message(
+        QueueUrl=os.environ['MESSAGE_QUEUE'],
+        MessageBody=json.dumps(ev)
+    )
+
 def update(data):
     print(data)
     if data.get('leaderkey') != os.environ['LEADER_KEY']:
@@ -59,20 +65,21 @@ def update(data):
     elif data.get('action') == 'Start':
         ec2.start_instances(InstanceIds=[os.environ['INSTANCE_ID']])
     elif data.get('action') == 'Shutdown':
-        sqs.send_message(
-            QueueUrl=os.environ['MESSAGE_QUEUE'],
-            MessageBody=json.dumps({
-                    'action': 'shutdown',
-                    'time': int(data.get('shutdown-time', 3)),
-                    'message': data.get('shutdown-message', 'Bye everyone!')
-                    })
-            )
+        send_sqs({
+            'action': 'shutdown',
+            'time': int(data.get('shutdown-time', 3)),
+            'message': data.get('shutdown-message', 'Bye everyone!')
+        })
     elif data.get('action') == 'Send message':
-        sqs.send_message(
-            QueueUrl=os.environ['MESSAGE_QUEUE'],
-            MessageBody=json.dumps({
-                    'action': 'send-message',
-                    'message': data.get('message', 'Nothing to see here...')
-                    })
-            )
+        send_sqs({
+            'action': 'send-message',
+            'message': data.get('message', 'Nothing to see here...')
+        })
+    elif data.get('action') == 'Add':
+        if data.get('player-name', '').strip():
+            send_sqs({
+                'action': 'whitelist',
+                'player': data['player-name']
+            })
+
     return main_page()
