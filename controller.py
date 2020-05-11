@@ -2,6 +2,7 @@
 
 import sys
 import json
+import time
 import boto3
 import sched
 import subprocess
@@ -16,16 +17,19 @@ event_sched = sched.scheduler()
 def command_queue(queue_url):
     response = sqs.receive_message(
         QueueUrl=queue_url,
-        WaitTimeSeconds=5
+        WaitTimeSeconds=1
     )
-    message = response['Messages'][0]
-    try:
-        yield json.loads(message['Body'])
-    finally:
-        sqs.delete_message(
-            QueueUrl=queue_url,
-            ReceiptHandle=message['ReceiptHandle']
-        )
+    if 'Messages' in response:
+        message = response['Messages'][0]
+        try:
+            yield json.loads(message['Body'])
+        finally:
+            sqs.delete_message(
+                QueueUrl=queue_url,
+                ReceiptHandle=message['ReceiptHandle']
+            )
+    else:
+        yield None
     
 
 class MinecraftInterface:
@@ -39,7 +43,7 @@ class MinecraftInterface:
     def schedule_shutdown(self, delay_min, message):
         self.send_message(message)
         for i in range(1, delay_min-1):
-            event_sched.enter(i * 60, 1, self.send_message,
+            event_sched.enter((delay_min - i) * 60, 1, self.send_message,
                               argument=(
                                   f'{i} minute{"s" if i>1 else ""} left...',
                               ))
@@ -62,20 +66,21 @@ class MinecraftInterface:
 
         
 def main(queue_url):
+    # Drain all queued commands at startup (so that we don't shutdown
+    # right after start)
+    draining = True
+    while draining:
+        with command_queue(queue_url) as msg:
+            if msg is None:
+                draining = False
+    
     mc = MinecraftInterface()
     delay_until = None
     while True:
         with command_queue(queue_url) as msg:
             mc.perform_action(msg)
 
-        if delay_until is not None:
-            delay = time.monotonic() - delay_until
-            time.sleep(delay)
-        delay = event_sched.run(blocking=False)
-        if delay is None:
-            delay_until = None
-        else:
-            delay_until = delay + time.monotonic()
+        event_sched.run(blocking=False)
 
 
 if __name__ == '__main__':

@@ -28,8 +28,11 @@ def server_port_status():
         return "down"
 
 def minecraft_status():
-    server = MinecraftServer.lookup(IP_ADDRESS)
-    return server.status()
+    try:
+        server = MinecraftServer.lookup(IP_ADDRESS)
+        return server.status()
+    except:
+        return None
     
 def render():
     return templates.admin_login()

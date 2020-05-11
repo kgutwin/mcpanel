@@ -11,6 +11,18 @@ Resources:
   MessageQueue:
     Type: AWS::SQS::Queue
 
+  QueueAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+            Resource: !GetAtt MessageQueue.Arn
+    
   WebServer:
    Type: AWS::Serverless::Function
    Properties:
