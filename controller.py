@@ -22,6 +22,7 @@ def command_queue(queue_url):
     if 'Messages' in response:
         message = response['Messages'][0]
         try:
+            print('[controller] Inbound message:', message['Body'])
             yield json.loads(message['Body'])
         finally:
             sqs.delete_message(
@@ -42,7 +43,9 @@ class MinecraftInterface:
 
     def schedule_shutdown(self, delay_min, message):
         self.send_message(
-            f'{message} {delay_min} minutes until server shutdown!')
+            f'{message} {delay_min} minute{"s" if delay_min>1 else ""}'
+            f' until server shutdown!'
+        )
         for i in range(1, delay_min):
             event_sched.enter((delay_min - i) * 60, 1, self.send_message,
                               argument=(
