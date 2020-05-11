@@ -17,7 +17,7 @@ event_sched = sched.scheduler()
 def command_queue(queue_url):
     response = sqs.receive_message(
         QueueUrl=queue_url,
-        WaitTimeSeconds=1
+        WaitTimeSeconds=2
     )
     if 'Messages' in response:
         message = response['Messages'][0]
@@ -41,14 +41,15 @@ class MinecraftInterface:
                         command + '\r'], check=True)
 
     def schedule_shutdown(self, delay_min, message):
-        self.send_message(message)
-        for i in range(1, delay_min-1):
+        self.send_message(
+            f'{message} {delay_min} minutes until server shutdown!')
+        for i in range(1, delay_min):
             event_sched.enter((delay_min - i) * 60, 1, self.send_message,
                               argument=(
                                   f'{i} minute{"s" if i>1 else ""} left...',
                               ))
-        for i in range(1, 10):
-            event_sched.enter((delay_min * 60) - i, 1, self.send_message,
+        for i in range(1, 11):
+            event_sched.enter((delay_min * 60) - (i*2), 1, self.send_message,
                               argument=(f'{i} ...',))
         event_sched.enter(delay_min * 60, 1, self.cmd, argument=('stop',))
 

@@ -24,7 +24,7 @@ def server_port_status():
     try:
         s.connect((IP_ADDRESS, 25565))
         return "up"
-    except socket.timeout:
+    except (socket.timeout, socket.error):
         return "down"
 
 def minecraft_status():
