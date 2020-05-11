@@ -13,7 +13,7 @@ def admin(body):
     return render(
         'base.html',
         emoji='1f3de',
-        title='Admin',
+        title='Minecraft Server Admin',
         body=body
     )
 
@@ -23,12 +23,22 @@ def admin_login(error_message=''):
     return admin(body)
 
 
-def admin_page(leaderkey, instance_state={'Name': 'unknown'}, response=''):
+def admin_mcstatus(mcstatus=None):
+    if mcstatus is None:
+        return ""
+
+    return render('admin-page-mcstatus.html', status=mcstatus)
+
+def admin_page(leaderkey, instance_state={'Name': 'unknown'}, mcstatus=None,
+               response=''):
+    rendered_mcstatus = admin_mcstatus(mcstatus)
+    
     body = render(
         'admin-page.html',
         leaderkey=leaderkey,
         instance_id=os.environ['INSTANCE_ID'],
         instance_state=instance_state,
+        mcstatus=rendered_mcstatus,
         response=response,
     )
     return admin(body)

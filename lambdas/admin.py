@@ -1,6 +1,9 @@
 import os
 import json
 import boto3
+import socket
+
+from mcstatus import MinecraftServer
 
 from lambdas import templates
 
@@ -8,16 +11,41 @@ ec2 = boto3.client('ec2')
 sqs = boto3.client('sqs')
 
 
+def get_instance():
+    r = ec2.describe_instances(InstanceIds=[os.environ['INSTANCE_ID']])
+    i = r['Reservations'][0]['Instances'][0]
+    return i
+
+IP_ADDRESS = get_instance()['PublicIpAddress']
+
+def server_port_status():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(0.2)
+    try:
+        s.connect((IP_ADDRESS, 25565))
+        return "up"
+    except socket.timeout:
+        return "down"
+
+def minecraft_status():
+    server = MinecraftServer.lookup(IP_ADDRESS)
+    return server.status()
+    
 def render():
     return templates.admin_login()
 
 def main_page(response=''):
-    r = ec2.describe_instances(InstanceIds=[os.environ['INSTANCE_ID']])
-    i = r['Reservations'][0]['Instances'][0]
-    status = i['State']
+    status = get_instance()['State']
+    status['port'] = server_port_status()
+    if status['port'] == 'up':
+        mcstatus = minecraft_status()
+    else:
+        mcstatus = None
+    
     return templates.admin_page(
         os.environ['LEADER_KEY'],
         instance_state=status,
+        mcstatus=mcstatus,
         response=response
     )
 
