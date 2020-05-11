@@ -1,0 +1,27 @@
+<form method="POST">
+  <input type="hidden" name="leaderkey" value="{leaderkey}">
+  <h2>Status</h2>
+  {instance_id}: {instance_state['Name']}
+  <button class="ui icon button" type="submit" name="action" value="reload">
+    <i class="sync alternate icon"></i>
+  </button>
+  <h2>Start the server</h2>
+  <input class="ui button green" type="submit" name="action" value="Start">
+  <h2>Send a message</h2>
+  <div class="ui input">
+    <input type="text" placeholder="Message to send..." name="message" style="width: 30em;">
+  </div>
+  <input class="ui button" type="submit" name="action" value="Send message">
+  <h2>Stop the server</h2>
+  <div class="ui form">
+    <div class="field">
+      <label>Time to shutdown (minutes)</label>
+      <input type="text" name="shutdown-time" placeholder="3">
+    </div>
+    <div class="field">
+      <label>Shutdown message</label>
+      <input type="text" name="shutdown-message" placeholder="Bye everyone!">
+    </div>
+    <input class="ui button red" type="submit" name="action" value="Shutdown">
+  </div>
+</form>

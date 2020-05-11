@@ -1,0 +1,45 @@
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  InstanceID:
+    Type: AWS::EC2::Instance::Id
+
+  LeaderKey:
+    Type: String
+
+Resources:
+  MessageQueue:
+    Type: AWS::SQS::Queue
+
+  WebServer:
+   Type: AWS::Serverless::Function
+   Properties:
+     CodeUri: .
+     Handler: lambdas.handler.handler
+     Runtime: python3.7
+     Environment:
+       Variables:
+         INSTANCE_ID: !Ref InstanceID
+         LEADER_KEY: !Ref LeaderKey
+         MESSAGE_QUEUE: !Ref MessageQueue
+     Policies:
+       - Statement:
+           - Effect: Allow
+             Action: 
+               - ec2:DescribeInstances
+             Resource: "*"
+           - Effect: Allow
+             Action:
+               - ec2:StartInstances
+             Resource: !Sub "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${InstanceID}"
+           - Effect: Allow
+             Action:
+               - sqs:SendMessage
+             Resource: !GetAtt MessageQueue.Arn
+     Events:
+       Web:
+         Type: HttpApi
+
+Outputs:
+  URL:
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
