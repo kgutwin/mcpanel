@@ -38,8 +38,8 @@ class MinecraftInterface:
         pass
 
     def cmd(self, command):
-        subprocess.run(['screen', '-S', 'minecraft', '-X', 'stuff',
-                        command + '\r'], check=True)
+        subprocess.run(['screen', '-S', 'minecraft', '-p', '1',
+                        '-X', 'stuff', command + '\r'], check=True)
 
     def schedule_shutdown(self, delay_min, message):
         self.send_message(
@@ -60,6 +60,23 @@ class MinecraftInterface:
 
     def send_message(self, msg):
         self.cmd(f'say {msg}')
+
+    def set_world(self, world_name):
+        self.send_message(
+            f'Changing world to {world_name}, log off in 1 minute...'
+        )
+
+        for i in range(1, 11):
+            event_sched.enter(60 - (i * 2), 1, self.send_message,
+                              argument=f('{i} ...',))
+
+        event_sched.enter(60, 1, self.change_world, argument=(world_name,))
+
+    def change_world(self, world_name):
+        subprocess.run(
+            ['/home/ec2-user/change-world.sh', world_name],
+            check=True
+        )
         
     def perform_action(self, msg):
         if msg is None:
@@ -71,6 +88,8 @@ class MinecraftInterface:
             self.send_message(msg['message'])
         elif msg['action'] == 'whitelist':
             self.cmd(f'whitelist add {msg["player"]}')
+        elif msg['action'] == 'set-world':
+            self.set_world(msg['world'])
 
         
 def main(queue_url):
