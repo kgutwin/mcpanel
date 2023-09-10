@@ -69,7 +69,7 @@ class MinecraftInterface:
 
         for i in range(1, 11):
             event_sched.enter(60 - (i * 2), 1, self.send_message,
-                              argument=f('{i} ...',))
+                              argument=(f'{i} ...',))
 
         event_sched.enter(60, 1, self.change_world, argument=(world_name,))
 
