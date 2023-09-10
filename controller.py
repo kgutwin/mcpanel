@@ -38,6 +38,7 @@ class MinecraftInterface:
         pass
 
     def cmd(self, command):
+        print('[controller] minecraft server command:', command)
         subprocess.run(['screen', '-S', 'minecraft', '-p', '1',
                         '-X', 'stuff', command + '\r'], check=True)
 
